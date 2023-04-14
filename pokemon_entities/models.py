@@ -23,10 +23,18 @@ class PokemonEntity(models.Model):
     disappeared_at = models.DateTimeField(null=True, blank=True)
     catching_start = models.TimeField(null=True, blank=True)
     catching_end = models.TimeField(null=True, blank=True)
+    level = models.IntegerField(blank=True, null=True)
+    health = models.IntegerField(blank=True, null=True)
+    strength = models.IntegerField(blank=True, null=True)
+    defense = models.IntegerField(blank=True, null=True)
+    stamina = models.IntegerField(blank=True, null=True)
 
     def __str__(self):
         if self.catching_start == self.catching_end is not None:
-            return f'''Catching time: anytime | Coords: 
+            return f'''Catching time: Anytime | Coords: 
+{self.Lat}:{self.Lon} | Pokemon:{self.title} |'''  # end string
+        elif self.catching_start == self.catching_end:
+            return f'''Catching time: Unknown | Coords: 
 {self.Lat}:{self.Lon} | Pokemon:{self.title} |'''  # end string
         return f'''Catching time:
 {self.catching_start}-{self.catching_end} | Coords:
