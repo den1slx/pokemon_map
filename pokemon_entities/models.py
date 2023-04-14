@@ -13,3 +13,9 @@ class Pokemon(models.Model):
         if self.pokedex_num == 0:
             return f'№0 |  {self.title}'
         return f'???? |  {self.title}'
+
+
+class PokemonEntity(models.Model):
+    title = models.ForeignKey(Pokemon, on_delete=models.CASCADE)
+    Lat = models.FloatField(default=0.0)
+    Lon = models.FloatField(default=0.0)
