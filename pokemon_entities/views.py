@@ -71,8 +71,11 @@ def show_all_pokemons(request):
         image_url = None
         if image:
             image_url = image.url
+        poke_id = pokemon.pokedex_num
+        if not poke_id:
+            poke_id = 0
         pokemons_on_page.append({
-            'pokemon_id': pokemon.pokedex_num,
+            'pokemon_id': poke_id,
             'img_url': image_url,
             'title_ru': pokemon.title,
         })
