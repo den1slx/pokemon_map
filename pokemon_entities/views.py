@@ -4,6 +4,7 @@ import json
 from django.http import HttpResponseNotFound
 from django.shortcuts import render
 from .models import Pokemon, PokemonEntity
+from django.utils import timezone
 
 
 MOSCOW_CENTER = [55.751244, 37.618423]
@@ -64,13 +65,13 @@ def show_all_pokemons(request):
                 image = pokemon.poke_image_link
             else:
                 image = image.path
-
-            add_pokemon(
-                folium_map,
-                pokemon_entity.Lat,
-                pokemon_entity.Lon,
-                image,
-            )
+            if is_catching_time(pokemon_entity):
+                add_pokemon(
+                    folium_map,
+                    pokemon_entity.Lat,
+                    pokemon_entity.Lon,
+                    image,
+                )
 
     pokemons_on_page = []
     for pokemon in pokemons:
@@ -120,3 +121,18 @@ def unpack_json(path):
                     Lon=pokemon_entity['lon'],
                 )
 
+
+def is_catching_time(PokemonEnttity):
+    start = PokemonEnttity.appeared_at
+    end = PokemonEnttity.disappeared_at
+    now = timezone.now()
+    if not now:
+        return False
+    if start and end:
+        return start <= now <= end
+    if start and not end:
+        return start <= now
+    if not start and end:
+        return now < end
+    if not start and not end:
+        return False
