@@ -3,8 +3,9 @@ import json
 
 from django.http import HttpResponseNotFound
 from django.shortcuts import render
-from .models import Pokemon, PokemonEntity, Evolution
+from .models import Pokemon, PokemonEntity
 from django.utils import timezone
+from random import choice
 
 
 MOSCOW_CENTER = [55.751244, 37.618423]
@@ -38,8 +39,18 @@ def show_pokemon(request, pokemon_id):
     pokemon = pokemon[0]
     pokemon_entities = PokemonEntity.objects.filter(pokedex_num=pokemon)
     image = get_image(request, pokemon)
-    previous_evolution = get_previous_evolution(request, pokemon_id)
-    next_evolution = get_next_evolution(request, pokemon_id)
+    previous_evolution = pokemon.evolutions
+    next_evolution = None
+    if pokemon.next_evolution.all():
+        next_evolutions = pokemon.next_evolution.all()
+        next_evolution = []
+        for evolution in next_evolutions:
+            evolution = get_evolutions(request, evolution)
+            next_evolution.append(evolution)
+    pokemon_id = pokemon.pokedex_num
+
+    previous_evolution = get_evolutions(request, previous_evolution)
+
     pokemon_info = {
         'pokemon_id': pokemon_id,
         'title_ru': pokemon.title_ru,
@@ -48,9 +59,14 @@ def show_pokemon(request, pokemon_id):
         'description': pokemon.description,
         'img_url': image,
         'entities': [{'lvl': '', 'lat': '', 'lon': ''}],
-        'next_evolution': next_evolution,
-        'previous_evolution': previous_evolution,
     }
+    if next_evolution:
+        if len(next_evolution) > 1:
+            pokemon_info.update({f'next_evolution': choice(next_evolution)})
+        else:
+            pokemon_info.update({'next_evolution': next_evolution[0]})
+    if previous_evolution:
+        pokemon_info.update({'previous_evolution': previous_evolution})
 
     for pokemon_entity in pokemon_entities:
         if is_catching_time(pokemon_entity):
@@ -157,46 +173,6 @@ def is_catching_time(pokemon_entity_object):
         return False
 
 
-def get_next_evolution(request, pokemon_id):
-    pokemons = Pokemon.objects.all()
-    pokemon = pokemons.filter(pokedex_num=pokemon_id)
-    pokemon = pokemon[0]
-    evolutions = Evolution.objects.filter(pokedex_num=pokemon)
-    if len(evolutions) == 1:
-        evolution = evolutions[0]
-        pokemon = pokemons.filter(pokedex_num=evolution.next_evolution)
-        if not pokemon:
-            return None
-        pokemon = pokemon[0]
-        image = get_image(request, pokemon)
-        next_evolution = {
-            'title_ru': pokemon.title_ru,
-            'pokemon_id': evolution.next_evolution,
-            'img_url': image,
-        }
-        return next_evolution
-
-
-def get_previous_evolution(request, pokemon_id):
-    pokemons = Pokemon.objects.all()
-    pokemon = pokemons.filter(pokedex_num=pokemon_id)
-    pokemon = pokemon[0]
-    evolutions = Evolution.objects.filter(pokedex_num=pokemon)
-    if len(evolutions) == 1:
-        evolution = evolutions[0]
-        pokemon = pokemons.filter(pokedex_num=evolution.previous_evolution)
-        if not pokemon:
-            return None
-        pokemon = pokemon[0]
-        image = get_image(request, pokemon)
-        previous_evolution = {
-            'title_ru': pokemon.title_ru,
-            'pokemon_id': evolution.previous_evolution,
-            'img_url': image,
-        }
-        return previous_evolution
-
-
 def get_image(request, pokemon_object):
     image = pokemon_object.poke_image_local
     if not image:
@@ -206,3 +182,21 @@ def get_image(request, pokemon_object):
     if not image:
         return DEFAULT_IMAGE_URL
     return image
+
+
+def get_evolutions(request, evolution):
+    evolutions_info = None
+    if evolution:
+        title = evolution.title_ru
+        pokemon_id = evolution.pokedex_num
+        img_url = get_image(request, evolution)
+        if pokemon_id:
+            evolutions_info = {
+                'title_ru': title,
+                'pokemon_id': int(pokemon_id),
+                'img_url': img_url,
+            },
+    if evolutions_info:
+        return evolutions_info[0]
+    else:
+        return None
