@@ -101,7 +101,11 @@ def unpack_json(path):
         pokemon_id = pokemon['pokemon_id']
         check_pokemon = Pokemon.objects.filter(title=pokemon['title_en'], pokedex_num=pokemon_id)
         if not check_pokemon:
-            Pokemon.objects.create(title=pokemon['title_en'], pokedex_num=pokemon_id, poke_image_link=pokemon['img_url'])
+            Pokemon.objects.create(
+                title=pokemon['title_en'],
+                pokedex_num=pokemon_id,
+                poke_image_link=pokemon['img_url']
+            )
         else:
             check_pokemon.update(poke_image_link=pokemon['img_url'])
         pokemon_obj = Pokemon.objects.filter(pokedex_num=pokemon_id)
@@ -122,9 +126,9 @@ def unpack_json(path):
                 )
 
 
-def is_catching_time(PokemonEnttity):
-    start = PokemonEnttity.appeared_at
-    end = PokemonEnttity.disappeared_at
+def is_catching_time(pokemon_entity_object):
+    start = pokemon_entity_object.appeared_at
+    end = pokemon_entity_object.disappeared_at
     now = timezone.now()
     if not now:
         return False
