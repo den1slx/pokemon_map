@@ -53,32 +53,7 @@ def show_pokemon(request, pokemon_id):
 
 
 def show_all_pokemons(request):
-    with open('pokemon_entities/pokemons.json', encoding='utf-8') as database:
-        pokemons = json.load(database)['pokemons']
-    for pokemon in pokemons:
-        pokemon_id = pokemon['pokemon_id']
-        check_pokemon = Pokemon.objects.filter(title=pokemon['title_en'], pokedex_num=pokemon_id)
-        if not check_pokemon:
-            Pokemon.objects.create(title=pokemon['title_en'], pokedex_num=pokemon_id, poke_image_link=pokemon['img_url'])
-        else:
-            check_pokemon.update(poke_image_link=pokemon['img_url'])
-        pokemon_obj = Pokemon.objects.filter(pokedex_num=pokemon_id)
-        pokemon_obj = pokemon_obj[0]
-
-        for pokemon_entity in pokemon['entities']:
-            pokemon_entities = PokemonEntity.objects.filter(title=pokemon_obj)
-            check = pokemon_entities.filter(
-                title=pokemon_obj,
-                Lat=pokemon_entity['lat'],
-                Lon=pokemon_entity['lon'],
-            )
-            if not check:
-                pokemon_entities.create(
-                    title=pokemon_obj,
-                    Lat=pokemon_entity['lat'],
-                    Lon=pokemon_entity['lon'],
-                )
-
+    unpack_json('pokemon_entities/pokemons.json')
     folium_map = folium.Map(location=MOSCOW_CENTER, zoom_start=12)
     pokemons = Pokemon.objects.all()
     for pokemon in pokemons:
@@ -88,7 +63,6 @@ def show_all_pokemons(request):
             if not image:
                 image = pokemon.poke_image_link
             else:
-                # image = request.build_absolute_uri()
                 image = image.path
 
             add_pokemon(
@@ -117,3 +91,32 @@ def show_all_pokemons(request):
         'map': folium_map._repr_html_(),
         'pokemons': pokemons_on_page,
     })
+
+
+def unpack_json(path):
+    with open(path, encoding='utf-8') as database:
+        pokemons = json.load(database)['pokemons']
+    for pokemon in pokemons:
+        pokemon_id = pokemon['pokemon_id']
+        check_pokemon = Pokemon.objects.filter(title=pokemon['title_en'], pokedex_num=pokemon_id)
+        if not check_pokemon:
+            Pokemon.objects.create(title=pokemon['title_en'], pokedex_num=pokemon_id, poke_image_link=pokemon['img_url'])
+        else:
+            check_pokemon.update(poke_image_link=pokemon['img_url'])
+        pokemon_obj = Pokemon.objects.filter(pokedex_num=pokemon_id)
+        pokemon_obj = pokemon_obj[0]
+
+        for pokemon_entity in pokemon['entities']:
+            pokemon_entities = PokemonEntity.objects.filter(title=pokemon_obj)
+            check = pokemon_entities.filter(
+                title=pokemon_obj,
+                Lat=pokemon_entity['lat'],
+                Lon=pokemon_entity['lon'],
+            )
+            if not check:
+                pokemon_entities.create(
+                    title=pokemon_obj,
+                    Lat=pokemon_entity['lat'],
+                    Lon=pokemon_entity['lon'],
+                )
+
