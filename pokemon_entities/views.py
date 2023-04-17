@@ -83,7 +83,15 @@ def show_pokemon(request, pokemon_id):
 
 
 def show_all_pokemons(request):
-    get_json_entity('pokemon_entities/pokemons.json')
+    try:
+        get_json_entity('pokemon_entities/pokemons.json')
+    except FileNotFoundError:
+        pass
+    except KeyError:
+        pass
+    except json.JSONDecodeError:
+        pass
+
     folium_map = folium.Map(location=MOSCOW_CENTER, zoom_start=12)
     pokemons = Pokemon.objects.all()
     for pokemon in pokemons:
@@ -108,10 +116,11 @@ def show_all_pokemons(request):
             image = pokemon.poke_image_link
         else:
             image = image.url
+        title = get_pokemon_name(pokemon)
         pokemons_on_page.append({
             'pokemon_id': poke_id,
             'img_url': image,
-            'title_ru': pokemon.title_ru,
+            'title_ru': title,
         })
     return render(request, 'mainpage.html', context={
         'map': folium_map._repr_html_(),
@@ -187,7 +196,7 @@ def get_image(request, pokemon_object):
 def get_evolutions(request, evolution):
     evolutions_info = None
     if evolution:
-        title = evolution.title_ru
+        title = get_pokemon_name(evolution)
         pokemon_id = evolution.pokedex_num
         img_url = get_image(request, evolution)
         if pokemon_id:
@@ -200,3 +209,12 @@ def get_evolutions(request, evolution):
         return evolutions_info[0]
     else:
         return None
+
+
+def get_pokemon_name(pokemon):
+    title = pokemon.title_ru
+    if not title:
+        title = pokemon.title_en
+    if not title:
+        title = pokemon.title_jp
+    return title
