@@ -83,15 +83,6 @@ def show_pokemon(request, pokemon_id):
 
 
 def show_all_pokemons(request):
-    try:
-        get_json_entity('pokemon_entities/pokemons.json')
-    except FileNotFoundError:
-        pass
-    except KeyError:
-        pass
-    except json.JSONDecodeError:
-        pass
-
     folium_map = folium.Map(location=MOSCOW_CENTER, zoom_start=12)
     pokemons = Pokemon.objects.all()
     for pokemon in pokemons:
@@ -126,44 +117,6 @@ def show_all_pokemons(request):
         'map': folium_map._repr_html_(),
         'pokemons': pokemons_on_page,
     })
-
-
-def get_json_entity(path):
-    with open(path, encoding='utf-8') as database:
-        pokemons = json.load(database)['pokemons']
-    for pokemon in pokemons:
-        pokemon_id = pokemon['pokemon_id']
-        check_pokemon = Pokemon.objects.filter(pokedex_num=pokemon_id)
-        if not check_pokemon:
-            Pokemon.objects.create(
-                title_en=pokemon['title_en'],
-                title_ru=pokemon['title_ru'],
-                title_jp=pokemon['title_jp'],
-                description=pokemon['description'],
-                pokedex_num=pokemon_id,
-                poke_image_link=pokemon['img_url']
-            )
-        else:
-            check_pokemon.update(
-                poke_image_link=pokemon['img_url'],
-                description=pokemon['description'],
-            )
-        pokemon_obj = Pokemon.objects.filter(pokedex_num=pokemon_id)
-        pokemon_obj = pokemon_obj[0]
-
-        for pokemon_entity in pokemon['entities']:
-            pokemon_entities = PokemonEntity.objects.filter(pokedex_num=pokemon_obj)
-            check = pokemon_entities.filter(
-                pokedex_num=pokemon_obj,
-                latitude=pokemon_entity['lat'],
-                longitude=pokemon_entity['lon'],
-            )
-            if not check:
-                pokemon_entities.create(
-                    pokedex_num=pokemon_obj,
-                    latitude=pokemon_entity['lat'],
-                    longitude=pokemon_entity['lon'],
-                )
 
 
 def is_catching_time(pokemon_entity_object):
