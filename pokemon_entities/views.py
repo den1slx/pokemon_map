@@ -72,8 +72,8 @@ def show_pokemon(request, pokemon_id):
         if is_catching_time(pokemon_entity):
             add_pokemon(
                 folium_map,
-                pokemon_entity.Lat,
-                pokemon_entity.Lon,
+                pokemon_entity.latitude,
+                pokemon_entity.longitude,
                 image,
             )
     return render(request, 'pokemon.html', context={
@@ -101,8 +101,8 @@ def show_all_pokemons(request):
             if is_catching_time(pokemon_entity):
                 add_pokemon(
                     folium_map,
-                    pokemon_entity.Lat,
-                    pokemon_entity.Lon,
+                    pokemon_entity.latitude,
+                    pokemon_entity.longitude,
                     image,
                 )
 
@@ -155,14 +155,14 @@ def get_json_entity(path):
             pokemon_entities = PokemonEntity.objects.filter(pokedex_num=pokemon_obj)
             check = pokemon_entities.filter(
                 pokedex_num=pokemon_obj,
-                Lat=pokemon_entity['lat'],
-                Lon=pokemon_entity['lon'],
+                latitude=pokemon_entity['lat'],
+                longitude=pokemon_entity['lon'],
             )
             if not check:
                 pokemon_entities.create(
                     pokedex_num=pokemon_obj,
-                    Lat=pokemon_entity['lat'],
-                    Lon=pokemon_entity['lon'],
+                    latitude=pokemon_entity['lat'],
+                    longitude=pokemon_entity['lon'],
                 )
 
 
