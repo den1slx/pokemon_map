@@ -1,8 +1,7 @@
 import folium
-import json
 
 from django.http import HttpResponseNotFound
-from django.shortcuts import render
+from django.shortcuts import render, get_list_or_404
 from .models import Pokemon, PokemonEntity
 from django.utils import timezone
 from random import choice
@@ -30,23 +29,22 @@ def add_pokemon(folium_map, lat, lon, image_url=DEFAULT_IMAGE_URL):
 
 
 def show_pokemon(request, pokemon_id):
-    pokemons = Pokemon.objects.all()
     folium_map = folium.Map(location=MOSCOW_CENTER, zoom_start=12)
-    pokemon = pokemons.filter(pokedex_num=pokemon_id)
-    if not pokemon or int(pokemon_id) < 1:
+    pokemon = get_list_or_404(Pokemon, pokedex_num=pokemon_id)
+    if int(pokemon_id) < 1:
         return HttpResponseNotFound('<h1>Такой покемон не найден</h1>')
 
     pokemon = pokemon[0]
-    pokemon_entities = PokemonEntity.objects.filter(pokedex_num=pokemon)
+    pokemon_entities = PokemonEntity.objects.filter(pokemon=pokemon)
     image = get_image(request, pokemon)
-    previous_evolution = pokemon.evolutions
-    next_evolution = None
-    if pokemon.next_evolution.all():
-        next_evolutions = pokemon.next_evolution.all()
-        next_evolution = []
-        for evolution in next_evolutions:
+    previous_evolution = pokemon.previous_evolution
+    next_evolutions = []
+    if pokemon.next_evolutions.all():
+        next_evolutions_objects = pokemon.next_evolutions.all()
+
+        for evolution in next_evolutions_objects:
             evolution = get_evolutions(request, evolution)
-            next_evolution.append(evolution)
+            next_evolutions.append(evolution)
     pokemon_id = pokemon.pokedex_num
 
     previous_evolution = get_evolutions(request, previous_evolution)
@@ -60,11 +58,11 @@ def show_pokemon(request, pokemon_id):
         'img_url': image,
         'entities': [{'lvl': '', 'lat': '', 'lon': ''}],
     }
-    if next_evolution:
-        if len(next_evolution) > 1:
-            pokemon_info.update({f'next_evolution': choice(next_evolution)})
+    if next_evolutions:
+        if len(next_evolutions) > 1:
+            pokemon_info.update({f'next_evolution': choice(next_evolutions)})
         else:
-            pokemon_info.update({'next_evolution': next_evolution[0]})
+            pokemon_info.update({'next_evolution': next_evolutions[0]})
     if previous_evolution:
         pokemon_info.update({'previous_evolution': previous_evolution})
 
@@ -86,7 +84,7 @@ def show_all_pokemons(request):
     folium_map = folium.Map(location=MOSCOW_CENTER, zoom_start=12)
     pokemons = Pokemon.objects.all()
     for pokemon in pokemons:
-        pokemon_entities = PokemonEntity.objects.filter(pokedex_num=pokemon)
+        pokemon_entities = PokemonEntity.objects.filter(pokemon=pokemon)
         for pokemon_entity in pokemon_entities:
             image = get_image(request, pokemon)
             if is_catching_time(pokemon_entity):
@@ -104,7 +102,7 @@ def show_all_pokemons(request):
             poke_id = 0
         image = pokemon.poke_image_local
         if not image:
-            image = pokemon.poke_image_link
+            image = DEFAULT_IMAGE_URL
         else:
             image = image.url
         title = get_pokemon_name(pokemon)
@@ -138,11 +136,8 @@ def is_catching_time(pokemon_entity_object):
 def get_image(request, pokemon_object):
     image = pokemon_object.poke_image_local
     if not image:
-        return pokemon_object.poke_image_link
-    else:
-        image = request.build_absolute_uri(pokemon_object.poke_image_local.url)
-    if not image:
         return DEFAULT_IMAGE_URL
+    image = request.build_absolute_uri(pokemon_object.poke_image_local.url)
     return image
 
 
