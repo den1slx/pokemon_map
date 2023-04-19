@@ -1,7 +1,7 @@
 import folium
 
 from django.http import HttpResponseNotFound
-from django.shortcuts import render, get_list_or_404
+from django.shortcuts import render, get_object_or_404
 from .models import Pokemon, PokemonEntity
 from django.utils import timezone
 from random import choice
@@ -30,11 +30,10 @@ def add_pokemon(folium_map, lat, lon, image_url=DEFAULT_IMAGE_URL):
 
 def show_pokemon(request, pokemon_id):
     folium_map = folium.Map(location=MOSCOW_CENTER, zoom_start=12)
-    pokemon = get_list_or_404(Pokemon, pokedex_num=pokemon_id)
+    pokemon = get_object_or_404(Pokemon, pokedex_num=pokemon_id)
     if int(pokemon_id) < 1:
         return HttpResponseNotFound('<h1>Такой покемон не найден</h1>')
 
-    pokemon = pokemon[0]
     pokemon_entities = PokemonEntity.objects.filter(pokemon=pokemon)
     image = get_image(request, pokemon)
     previous_evolution = pokemon.previous_evolution
@@ -56,7 +55,6 @@ def show_pokemon(request, pokemon_id):
         'title_jp': pokemon.title_jp,
         'description': pokemon.description,
         'img_url': image,
-        'entities': [{'lvl': '', 'lat': '', 'lon': ''}],
     }
     if next_evolutions:
         if len(next_evolutions) > 1:
@@ -100,12 +98,12 @@ def show_all_pokemons(request):
         poke_id = pokemon.pokedex_num
         if not poke_id:
             poke_id = 0
-        image = pokemon.poke_image_local
+        image = pokemon.image
         if not image:
             image = DEFAULT_IMAGE_URL
         else:
             image = image.url
-        title = get_pokemon_name(pokemon)
+        title = pokemon.title_ru
         pokemons_on_page.append({
             'pokemon_id': poke_id,
             'img_url': image,
@@ -134,17 +132,17 @@ def is_catching_time(pokemon_entity_object):
 
 
 def get_image(request, pokemon_object):
-    image = pokemon_object.poke_image_local
+    image = pokemon_object.image
     if not image:
         return DEFAULT_IMAGE_URL
-    image = request.build_absolute_uri(pokemon_object.poke_image_local.url)
+    image = request.build_absolute_uri(pokemon_object.image.url)
     return image
 
 
 def get_evolutions(request, evolution):
     evolutions_info = None
     if evolution:
-        title = get_pokemon_name(evolution)
+        title = evolution.title_ru
         pokemon_id = evolution.pokedex_num
         img_url = get_image(request, evolution)
         if pokemon_id:
@@ -157,12 +155,3 @@ def get_evolutions(request, evolution):
         return evolutions_info[0]
     else:
         return None
-
-
-def get_pokemon_name(pokemon):
-    title = pokemon.title_ru
-    if not title:
-        title = pokemon.title_en
-    if not title:
-        title = pokemon.title_jp
-    return title

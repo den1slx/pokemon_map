@@ -15,8 +15,7 @@ class Pokemon(models.Model):
         on_delete=models.CASCADE,
     )
     description = models.TextField('Описание', blank=True, null=True)
-    poke_image_local = models.ImageField(blank=True, null=True, verbose_name='Путь к картинке на вашем устройстве')
-
+    image = models.ImageField(blank=True, null=True, verbose_name='Путь к картинке на вашем устройстве')
 
     def __str__(self):
         if self.pokedex_num and self.pokedex_num > 0:
@@ -36,7 +35,7 @@ class PokemonEntity(models.Model):
         Pokemon,
         on_delete=models.CASCADE,
         verbose_name='id покемона в покедексе',
-        related_name='Pokemons',
+        related_name='Pokemon',
     )
     latitude = models.FloatField(blank=True, null=True, verbose_name='Широта')
     longitude = models.FloatField(blank=True, null=True, verbose_name='Долгота')
