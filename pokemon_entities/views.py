@@ -44,9 +44,10 @@ def show_pokemon(request, pokemon_id):
     image = get_image(request, pokemon)
     previous_evolution = pokemon.previous_evolution
     next_evolutions = []
-    if pokemon.next_evolutions.all():
+    if pokemon.next_evolutions.count() == 1:
+        next_evolutions.append(get_evolutions(request, pokemon.next_evolutions.first()))
+    if pokemon.next_evolutions.count() > 1:
         next_evolutions_objects = pokemon.next_evolutions.all()
-
         for evolution in next_evolutions_objects:
             evolution = get_evolutions(request, evolution)
             next_evolutions.append(evolution)
@@ -59,9 +60,10 @@ def show_pokemon(request, pokemon_id):
         'title_ru': pokemon.title_ru,
         'title_en': pokemon.title_en,
         'title_jp': pokemon.title_jp,
-        'description': pokemon.description,
+        'description': f'{pokemon.description}',
         'img_url': image,
     }
+
     if next_evolutions:
         if len(next_evolutions) > 1:
             pokemon_info.update({f'next_evolution': choice(next_evolutions)})
