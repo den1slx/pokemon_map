@@ -1,4 +1,5 @@
 from django.db import models  # noqa F401
+from django.utils import timezone
 
 
 class Pokemon(models.Model):
@@ -19,15 +20,8 @@ class Pokemon(models.Model):
 
     def __str__(self):
         if self.pokedex_num and self.pokedex_num > 0:
-            if self.title_ru:
-                return f'№{self.pokedex_num} |  {self.title_ru}'
-            if self.title_en:
-                return f'№{self.pokedex_num} |  {self.title_en}'
-            if self.title_jp:
-                return f'№{self.pokedex_num} |  {self.title_jp}'
-            return f'№{self.pokedex_num} |'
+            return f'№{self.pokedex_num} |  {self.title_ru}'
         return f'№???? |  {self.title_ru}'
-
 
 
 class PokemonEntity(models.Model):
@@ -37,9 +31,9 @@ class PokemonEntity(models.Model):
         verbose_name='id покемона в покедексе',
         related_name='Pokemon',
     )
-    latitude = models.FloatField(blank=True, null=True, verbose_name='Широта')
-    longitude = models.FloatField(blank=True, null=True, verbose_name='Долгота')
-    appeared_at = models.DateTimeField(null=True, blank=True, verbose_name='Появление покемона')
+    latitude = models.FloatField(null=True, verbose_name='Широта')
+    longitude = models.FloatField(null=True, verbose_name='Долгота')
+    appeared_at = models.DateTimeField(null=True, default=timezone.now(), blank=True, verbose_name='Появление покемона')
     disappeared_at = models.DateTimeField(null=True, blank=True, verbose_name='Исчезновение покемона')
     level = models.IntegerField(blank=True, null=True, verbose_name='Уровень')
     health = models.IntegerField(blank=True, null=True, verbose_name='Здоровье')
