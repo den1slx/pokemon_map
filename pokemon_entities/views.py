@@ -34,7 +34,13 @@ def show_pokemon(request, pokemon_id):
     if int(pokemon_id) < 1:
         return HttpResponseNotFound('<h1>Такой покемон не найден</h1>')
 
-    pokemon_entities = PokemonEntity.objects.filter(pokemon=pokemon)
+    now = timezone.now()
+    pokemon_entities = list(
+        PokemonEntity.objects.filter(pokemon=pokemon, appeared_at__lte=now, disappeared_at__isnull=True))
+    add_entities = list(
+        PokemonEntity.objects.filter(pokemon=pokemon, appeared_at__lte=now, disappeared_at__gte=now))
+    pokemon_entities.extend(add_entities)
+
     image = get_image(request, pokemon)
     previous_evolution = pokemon.previous_evolution
     next_evolutions = []
@@ -65,13 +71,12 @@ def show_pokemon(request, pokemon_id):
         pokemon_info.update({'previous_evolution': previous_evolution})
 
     for pokemon_entity in pokemon_entities:
-        if is_catching_time(pokemon_entity):
-            add_pokemon(
-                folium_map,
-                pokemon_entity.latitude,
-                pokemon_entity.longitude,
-                image,
-            )
+        add_pokemon(
+            folium_map,
+            pokemon_entity.latitude,
+            pokemon_entity.longitude,
+            image,
+        )
     return render(request, 'pokemon.html', context={
         'map': folium_map._repr_html_(),
         'pokemon': pokemon_info,
@@ -82,16 +87,20 @@ def show_all_pokemons(request):
     folium_map = folium.Map(location=MOSCOW_CENTER, zoom_start=12)
     pokemons = Pokemon.objects.all()
     for pokemon in pokemons:
-        pokemon_entities = PokemonEntity.objects.filter(pokemon=pokemon)
+        now = timezone.now()
+        pokemon_entities = list(
+            PokemonEntity.objects.filter(pokemon=pokemon, appeared_at__lte=now, disappeared_at__isnull=True))
+        add_entities = list(
+            PokemonEntity.objects.filter(pokemon=pokemon, appeared_at__lte=now, disappeared_at__gte=now))
+        pokemon_entities.extend(add_entities)
         for pokemon_entity in pokemon_entities:
             image = get_image(request, pokemon)
-            if is_catching_time(pokemon_entity):
-                add_pokemon(
-                    folium_map,
-                    pokemon_entity.latitude,
-                    pokemon_entity.longitude,
-                    image,
-                )
+            add_pokemon(
+                folium_map,
+                pokemon_entity.latitude,
+                pokemon_entity.longitude,
+                image,
+            )
 
     pokemons_on_page = []
     for pokemon in pokemons:
@@ -113,22 +122,6 @@ def show_all_pokemons(request):
         'map': folium_map._repr_html_(),
         'pokemons': pokemons_on_page,
     })
-
-
-def is_catching_time(pokemon_entity_object):
-    start = pokemon_entity_object.appeared_at
-    end = pokemon_entity_object.disappeared_at
-    now = timezone.now()
-    if not now:
-        return False
-    if start and end:
-        return start <= now <= end
-    if start and not end:
-        return start <= now
-    if not start and end:
-        return now < end
-    if not start and not end:
-        return False
 
 
 def get_image(request, pokemon_object):
@@ -155,3 +148,6 @@ def get_evolutions(request, evolution):
         return evolutions_info[0]
     else:
         return None
+
+
+pokemon = Pokemon.objects.get(pokedex_num=133)
