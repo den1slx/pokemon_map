@@ -1,5 +1,4 @@
 from django.db import models  # noqa F401
-from django.utils import timezone
 
 
 class Pokemon(models.Model):
@@ -19,9 +18,7 @@ class Pokemon(models.Model):
     image = models.ImageField(blank=True, null=True, verbose_name='Путь к картинке на вашем устройстве')
 
     def __str__(self):
-        if self.pokedex_num and self.pokedex_num > 0:
-            return f'№{self.pokedex_num} |  {self.title_ru}'
-        return f'№???? |  {self.title_ru}'
+        return f'id: {self.id} | pokedex id: {self.pokedex_num}  |  {self.title_ru}'
 
 
 class PokemonEntity(models.Model):
@@ -29,12 +26,12 @@ class PokemonEntity(models.Model):
         Pokemon,
         on_delete=models.CASCADE,
         verbose_name='id покемона в покедексе',
-        related_name='Pokemon',
+        related_name='pokemon_id',
     )
     latitude = models.FloatField(null=True, verbose_name='Широта')
     longitude = models.FloatField(null=True, verbose_name='Долгота')
-    appeared_at = models.DateTimeField(null=True, default=timezone.now(), blank=True, verbose_name='Появление покемона')
-    disappeared_at = models.DateTimeField(null=True, blank=True, verbose_name='Исчезновение покемона')
+    appeared_at = models.DateTimeField(null=True, verbose_name='Появление покемона')
+    disappeared_at = models.DateTimeField(null=True, verbose_name='Исчезновение покемона')
     level = models.IntegerField(blank=True, null=True, verbose_name='Уровень')
     health = models.IntegerField(blank=True, null=True, verbose_name='Здоровье')
     strength = models.IntegerField(blank=True, null=True, verbose_name='Сила')
@@ -42,4 +39,4 @@ class PokemonEntity(models.Model):
     stamina = models.IntegerField(blank=True, null=True, verbose_name='Выносливость')
 
     def __str__(self):
-        return f'| Pokemon:{self.pokemon}'
+        return f'| {self.pokemon} |'
