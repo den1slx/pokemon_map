@@ -5,7 +5,6 @@ class Pokemon(models.Model):
     title_en = models.CharField(max_length=200, blank=True, null=True, verbose_name='Английское название')
     title_ru = models.CharField(max_length=200, null=True, verbose_name='Русское название')
     title_jp = models.CharField(max_length=200, blank=True, null=True, verbose_name='Японское название')
-    pokedex_num = models.IntegerField(null=True, unique=True, verbose_name='id покемона в покедексе')
     previous_evolution = models.ForeignKey(
         'self',
         verbose_name='Предшествующая эволюция',
@@ -18,7 +17,7 @@ class Pokemon(models.Model):
     image = models.ImageField(blank=True, null=True, verbose_name='Путь к картинке на вашем устройстве')
 
     def __str__(self):
-        return f'id: {self.id} | pokedex id: {self.pokedex_num}  |  {self.title_ru}'
+        return f'id: {self.id} |  {self.title_ru}'
 
 
 class PokemonEntity(models.Model):
