@@ -27,7 +27,6 @@ def add_pokemon(folium_map, lat, lon, image_url=DEFAULT_IMAGE_URL):
 
 
 def show_pokemon(request, pokemon_id):
-    folium_map = folium.Map(location=MOSCOW_CENTER, zoom_start=12)
     pokemon = get_object_or_404(Pokemon, id=pokemon_id)
 
     now = timezone.now()
@@ -56,6 +55,7 @@ def show_pokemon(request, pokemon_id):
     if previous_evolution:
         pokemon_info.update({'previous_evolution': previous_evolution})
 
+    folium_map = folium.Map(location=MOSCOW_CENTER, zoom_start=12)
     for pokemon_entity in pokemon_entities:
         add_pokemon(
             folium_map,
@@ -74,7 +74,7 @@ def show_all_pokemons(request):
     pokemons = Pokemon.objects.all()
 
     now = timezone.now()
-    pokemon_entities = PokemonEntity.objects.filter(appeared_at__lte=now, disappeared_at__gte=now).prefetch_related(
+    pokemon_entities = PokemonEntity.objects.filter(appeared_at__lte=now, disappeared_at__gte=now).select_related(
         'pokemon')
     for pokemon_entity in pokemon_entities:
         image = get_image(request, pokemon_entity.pokemon)
@@ -87,17 +87,10 @@ def show_all_pokemons(request):
 
     pokemons_on_page = []
     for pokemon in pokemons:
-        poke_id = pokemon.id
-        if not poke_id:
-            poke_id = 0
-        image = pokemon.image
-        if not image:
-            image = DEFAULT_IMAGE_URL
-        else:
-            image = image.url
+        image = get_image(request, pokemon)
         title = pokemon.title_ru
         pokemons_on_page.append({
-            'pokemon_id': poke_id,
+            'pokemon_id': pokemon.id,
             'img_url': image,
             'title_ru': title,
         })
@@ -117,17 +110,14 @@ def get_image(request, pokemon_object):
 
 def get_evolutions(request, evolution):
     evolutions_info = None
-    if evolution:
+    if evolution and evolution.id:
         title = evolution.title_ru
-        pokemon_id = evolution.id
         img_url = get_image(request, evolution)
-        if pokemon_id:
-            evolutions_info = {
-                'title_ru': title,
-                'pokemon_id': int(pokemon_id),
-                'img_url': img_url,
-            },
+        evolutions_info = {
+            'title_ru': title,
+            'pokemon_id': evolution.id,
+            'img_url': img_url,
+        }
     if evolutions_info:
-        return evolutions_info[0]
-    else:
-        return None
+        return evolutions_info
+    return None
