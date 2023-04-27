@@ -1,10 +1,20 @@
 from django.db import models  # noqa F401
 
 
+class ElementType(models.Model):
+    title = models.CharField(max_length=30)
+    image = models.ImageField(blank=True, verbose_name='Путь к картинке на вашем устройстве')
+    strong_against = models.ManyToManyField('self', symmetrical=False, null=True, blank=True)
+
+    def __str__(self):
+        return self.title
+
+
 class Pokemon(models.Model):
     title_en = models.CharField(max_length=200, blank=True, null=True, verbose_name='Английское название')
     title_ru = models.CharField(max_length=200, null=True, verbose_name='Русское название')
     title_jp = models.CharField(max_length=200, blank=True, null=True, verbose_name='Японское название')
+    element_type = models.ManyToManyField(ElementType, through='PokemonElementType')
     previous_evolution = models.ForeignKey(
         'self',
         verbose_name='Предшествующая эволюция',
@@ -17,7 +27,7 @@ class Pokemon(models.Model):
     image = models.ImageField(blank=True, null=True, verbose_name='Путь к картинке на вашем устройстве')
 
     def __str__(self):
-        return f'id: {self.id} |  {self.title_ru}'
+        return f'id: {self.id} | Pokemon: {self.title_ru}'
 
 
 class PokemonEntity(models.Model):
@@ -39,3 +49,11 @@ class PokemonEntity(models.Model):
 
     def __str__(self):
         return f'| {self.pokemon} |'
+
+
+class PokemonElementType(models.Model):
+    pokemon = models.ForeignKey(Pokemon, on_delete=models.CASCADE)
+    type = models.ForeignKey(ElementType, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f'{self.pokemon} | {self.type}'
