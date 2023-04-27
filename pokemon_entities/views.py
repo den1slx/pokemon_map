@@ -1,7 +1,7 @@
 import folium
 
 from django.shortcuts import render, get_object_or_404
-from .models import Pokemon, PokemonEntity
+from .models import Pokemon, PokemonEntity, PokemonElementType, ElementType
 from django.utils import timezone
 
 
@@ -13,22 +13,27 @@ DEFAULT_IMAGE_URL = (
 )
 
 
-def add_pokemon(folium_map, lat, lon, image_url=DEFAULT_IMAGE_URL):
+def add_pokemon(folium_map, lat, lon, image_url=DEFAULT_IMAGE_URL,
+                level=None, health=None, strength=None, defense=None, stamina=None):
     icon = folium.features.CustomIcon(
         image_url,
         icon_size=(50, 50),
     )
+    text = collect_string(level, health, strength, defense, stamina)
+
     folium.Marker(
         [lat, lon],
         # Warning! `tooltip` attribute is disabled intentionally
         # to fix strange folium cyrillic encoding bug
         icon=icon,
+        popup=text,
     ).add_to(folium_map)
 
 
 def show_pokemon(request, pokemon_id):
     pokemon = get_object_or_404(Pokemon, id=pokemon_id)
-
+    types = PokemonElementType.objects.filter(pokemon=pokemon)
+    types = get_types(types, request)
     now = timezone.now()
     pokemon_entities = PokemonEntity.objects.filter(pokemon=pokemon, appeared_at__lte=now, disappeared_at__gte=now)
 
@@ -44,6 +49,7 @@ def show_pokemon(request, pokemon_id):
         'title_jp': pokemon.title_jp,
         'description': pokemon.description,
         'img_url': image,
+        'element_type': types,
     }
 
     if next_evolution:
@@ -58,6 +64,11 @@ def show_pokemon(request, pokemon_id):
             pokemon_entity.latitude,
             pokemon_entity.longitude,
             image,
+            level=pokemon_entity.level,
+            health=pokemon_entity.health,
+            strength=pokemon_entity.strength,
+            defense=pokemon_entity.defense,
+            stamina=pokemon_entity.stamina,
         )
     return render(request, 'pokemon.html', context={
         'map': folium_map._repr_html_(),
@@ -115,3 +126,41 @@ def get_evolutions(request, evolution):
             'img_url': img_url,
         }
     return evolutions_info
+
+
+def collect_string(level, health, strength, defense, stamina):
+    text = ''
+    if level:
+        text += f'Уровень: {level}\n'
+    else:
+        text += f'Уровень ???\n'
+    if health:
+        text += f'Здоровье: {health}\n'
+    else:
+        text += f'Здоровье ???\n'
+    if strength:
+        text += f'Сила: {strength}\n'
+    else:
+        text += f'Сила ???\n'
+    if defense:
+        text += f'Защита: {defense}\n'
+    else:
+        text += f'Защита ???\n'
+    if stamina:
+        text += f'Выносливость: {stamina} \n'
+    else:
+        text += f'Выносливость ???\n'
+    return text
+
+
+def get_types(types_objects, request):
+    element_type = []
+    for type_obj in types_objects:
+        type_info = {
+            'img': get_image(request, type_obj.type),
+            'title': type_obj.type.title,
+            'strong_against': type_obj.type.strong_against.all()
+        }
+        element_type.append(type_info)
+    return element_type
+
