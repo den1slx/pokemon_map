@@ -1,7 +1,7 @@
 import folium
 
 from django.shortcuts import render, get_object_or_404
-from .models import Pokemon, PokemonEntity, PokemonElementType, ElementType
+from .models import Pokemon, PokemonEntity
 from django.utils import timezone
 
 
@@ -32,7 +32,7 @@ def add_pokemon(folium_map, lat, lon, image_url=DEFAULT_IMAGE_URL,
 
 def show_pokemon(request, pokemon_id):
     pokemon = get_object_or_404(Pokemon, id=pokemon_id)
-    types = PokemonElementType.objects.filter(pokemon=pokemon)
+    types = pokemon.element_type.all()
     types = get_types(types, request)
     now = timezone.now()
     pokemon_entities = PokemonEntity.objects.filter(pokemon=pokemon, appeared_at__lte=now, disappeared_at__gte=now)
@@ -157,10 +157,9 @@ def get_types(types_objects, request):
     element_type = []
     for type_obj in types_objects:
         type_info = {
-            'img': get_image(request, type_obj.type),
-            'title': type_obj.type.title,
-            'strong_against': type_obj.type.strong_against.all()
+            'img': get_image(request, type_obj),
+            'title': type_obj.title,
+            'strong_against': type_obj.strong_against.all()
         }
         element_type.append(type_info)
     return element_type
-
