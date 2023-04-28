@@ -90,6 +90,11 @@ def show_all_pokemons(request):
             pokemon_entity.latitude,
             pokemon_entity.longitude,
             image,
+            level=pokemon_entity.level,
+            health=pokemon_entity.health,
+            strength=pokemon_entity.strength,
+            defense=pokemon_entity.defense,
+            stamina=pokemon_entity.stamina,
         )
 
     pokemons_on_page = []
